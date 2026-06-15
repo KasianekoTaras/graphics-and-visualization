@@ -31,6 +31,68 @@ bool CRayTrace::compPrimaryRayMatrix(const CCamera& cam, glm::mat3& m) {
 ///
 bool CRayTrace::rayTrace(const CScene& scene, CRay& ray, COutput& out) {
 
+    float tmin = FLT_MAX;
+    float EPS = 0.0001f;
+    bool is_intersection = false;
+    CObject* hit_obj;
+
+    for(auto obj : scene.objectList) {
+        float t = obj->intersect(ray);
+        if(t > EPS && t < tmin) {
+            tmin = t;
+            is_intersection = true;
+            hit_obj = obj;
+        }
+    }
+    /*if(is_intersection == false) return false;
+        glm::vec3 p = ray.pos + tmin * ray.dir;
+        for(auto light : scene.lightList) {
+            out.col = out.col + light.color * hit_obj->matAmbient;
+            glm::vec3 n = hit_obj->normal(p);
+            glm::vec3 L = glm::normalize(light.pos - p);
+            float cos_angle = glm::dot(n, L);\
+            if(cos_angle > 0.001) {
+            out.col = out.col + light.color * hit_obj->matDiffuse * cos_angle;
+            glm::vec3 h = glm::normalize(L + (-ray.dir));
+            float cos_beta = glm::dot(n, h);
+            if(cos_beta > 0.001){
+                out.col = out.col + light.color * hit_obj->matSpecular * powf(cos_beta,hit_obj->matShininess);
+            }
+        } //out.col = hit_obj ->matAmbient * light.color;
+    }*/
+
+    if(is_intersection == false) return false;
+    glm::vec3 p = ray.pos + tmin * ray.dir;
+    glm::vec3 n = hit_obj->normal(p);
+    for(auto light : scene.lightList) {
+        out.col = out.col + light.color * hit_obj->matAmbient;
+        CRay shadow_ray;
+        shadow_ray.pos = p;
+        shadow_ray.dir = glm::normalize(light.pos - p);
+        float light_dist = glm::length(light.pos - p);
+        bool in_shadow = false;
+        for(auto obj : scene.objectList) {
+            float t = obj->intersect(shadow_ray);
+            if(t > EPS && t < light_dist) {
+                in_shadow = true;
+                break;
+            }
+        }
+        if(in_shadow) continue;
+        glm::vec3 L = shadow_ray.dir;
+        float cos_angle = glm::dot(n,L);
+        if(cos_angle > 0.001f){
+            out.col = out.col + light.color * hit_obj->matDiffuse * cos_angle;
+
+            glm::vec3 h = glm::normalize(L + (-ray.dir));
+            float cos_beta = glm::dot(n,h);
+            if(cos_beta > 0.001f){
+                out.col = out.col + light.color * hit_obj->matSpecular * powf(cos_beta, hit_obj->matShininess);
+            }
+        }
+    }
+
+
     /// looks for the closest object along the ray path
     /// returns false if there are no intersection
 

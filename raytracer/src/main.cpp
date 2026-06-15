@@ -10,10 +10,10 @@ extern void draw_triangles();
 ///
 int main (int argc, char * const argv[]) {
 
-//    draw_triangles();
+    //draw_triangles();
     //draw_robot();
-//    return 0;
-    
+    //return 0;
+
     std::cout << "ray tracing ... \n";
 
     CScene scene;
@@ -24,56 +24,103 @@ int main (int argc, char * const argv[]) {
     }
 
     CRayTrace rt;
-    CRay ray;
+    CRay ray, ray1;
     COutput results;
     
     /// computes primary ray matrix
-     glm::mat3 ray_matrix;
-     CRayTrace::compPrimaryRayMatrix(scene.cam, ray_matrix);
-     std::cout << "Camera projection matrix:" << std::endl;
-     PRINT_MAT3(ray_matrix);
+    glm::mat3 ray_matrix;
+    CRayTrace::compPrimaryRayMatrix(scene.cam, ray_matrix);
+    //std::cout << "Camera projection matrix:" << std::endl;
+    //PRINT_MAT3(ray_matrix);
+
+    CSphere sphere1_t ({0.0f,0.0f,0.0f},5.0f);
+    ray1.pos = {0.0f,0.0f,10.0f};
+    ray1.dir = {0.3f,0.3f,-1.0f};
+
+    //std::cout << "T = " << sphere1_t.intersect(ray1);
 
     /// computes ray direction for sample pixel positions
-    // ...
+    /*ray.pos = scene.cam.eyep;
+    float fx = (float)scene.cam.width/2 - 1 + 0.5f;
+    float fy = (float)scene.cam.height/2 - 1 + 0.5f;
+    glm::vec3 position(fx,fy,1);
+    ray.dir = glm::normalize(ray_matrix * position);
+    PRINT_VEC3("dir = ", ray.dir);*/
+
+    /*ray.pos = scene.cam.eyep;
+    float fx = 0.5f;
+    float fy = 0.5f;
+    glm::vec3 position(fx,fy,1);
+    ray.dir = glm::normalize(ray_matrix * position);
+    PRINT_VEC3("dir = ", ray.dir);*/
+
+    /*ray.pos = scene.cam.eyep;
+    float fx = (float)scene.cam.width/2 - 1 + 0.5f;
+    float fy = 0.5f;
+    glm::vec3 position(fx,fy,1);
+    ray.dir = glm::normalize(ray_matrix * position);
+    PRINT_VEC3("dir = ", ray.dir);*/
+
+    /*ray.pos = scene.cam.eyep;
+    float fx = 0.5f;
+    float fy = (float)scene.cam.height/2 - 1 + 0.5f;
+    glm::vec3 position(fx,fy,1);
+    ray.dir = glm::normalize(ray_matrix * position);
+    PRINT_VEC3("dir = ", ray.dir);*/
+
+    /*ray.pos = scene.cam.eyep;
+    float fx = (float)scene.cam.width - 1 + 0.5f;
+    float fy = (float)scene.cam.height - 1 + 0.5f;
+    glm::vec3 position(fx,fy,1);
+    ray.dir = glm::normalize(ray_matrix * position);
+    PRINT_VEC3("dir = ", ray.dir);*/
 
 
     /// creates raster image object
-    // CImage image(scene.cam.width, scene.cam.height);
+    CImage image(scene.cam.width, scene.cam.height);
 
     /// main loop
-
+    for(int j = 0; j < scene.cam.height; j++){
+        for(int i = 0; i < scene.cam.width; i++){
             /// position of the image point
-            /// ...
+            float fx = (float)i + 0.5f;
+            float fy = (float)j + 0.5f;
+            ray.pos = scene.cam.eyep;
+            glm::vec3 position(fx,fy,1);
+            ray.dir = glm::normalize(ray_matrix * position);
+            //glm::vec3 rgb(0.0f, 0.0f, 0.0f);
+            //rgb.z = (ray.dir.z + 1.0f)/2.0f;
+            //image.setPixel(i,j,rgb);
 
             /// primary ray
             /// ...
 
             /// background color
-            // results.col = {0,0,0};
+            results.col = {0,0,0};
             /// secondary ray counter
-            // results.tree = 0;
+            results.tree = 0;
             /// ray energy
-            // results.energy = 1.0f;
-            
+            results.energy = 1.0f;
+
             /// rendering
-            /// rt.rayTrace(scene, ray, results);
+            rt.rayTrace(scene, ray, results);
 
             /// handles pixel over-saturation
-            // if(results.col.x > 1 || results.col.y > 1 || results.col.z > 1) {
-            //    results.col = {1,1,1};
-            //}
+            if(results.col.x > 1 || results.col.y > 1 || results.col.z > 1) {
+                results.col = {1,1,1};
+            }
 
             /// writes pixel to output image
-            // image.setPixel(i, j, results.rgb);
-
+            image.setPixel(i, j, results.col);
+        }
+    }
 
     /// writes image to disk file with gamma correction
-    // image.save("output.png", true);
+    image.save("shadow.png", false);
 
-    // cv::imshow("image", image.getImage());
-    // cv::waitKey();
-    
-    std::cout << std::endl << std::endl;
+    cv::imshow("shadow", image.getImage());
+    //cv::waitKey();
+
     return 0;
 }
 
